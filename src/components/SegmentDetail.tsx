@@ -56,8 +56,19 @@ export default function SegmentDetail({
               >
                 {segment.sizeRange}
               </span>
+              {segment.priceRange && (
+                <span
+                  className="rounded-full px-3 py-1 text-xs font-medium"
+                  style={{
+                    backgroundColor: `${segment.colorHex}10`,
+                    color: segment.colorHex,
+                  }}
+                >
+                  {segment.priceRange}
+                </span>
+              )}
               <span className="text-xs text-slate-500">
-                Steg {segment.order} av 6 i boligreisen
+                Steg {segment.order} av 4 i boligreisen
               </span>
             </div>
           </div>

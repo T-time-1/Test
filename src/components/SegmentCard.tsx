@@ -36,6 +36,9 @@ export default function SegmentCard({
         </div>
         <div className="text-right">
           <p className="text-xs text-slate-500">{segment.sizeRange}</p>
+          {segment.priceRange && (
+            <p className="text-[10px] text-slate-500 mt-0.5">{segment.priceRange}</p>
+          )}
           <div
             className="mt-1 h-1 w-12 rounded-full opacity-60 ml-auto"
             style={{ backgroundColor: segment.colorHex }}

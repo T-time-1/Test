@@ -82,7 +82,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <StatCard
                 label="Segmenter"
-                value="6"
+                value="4"
                 sub="boligkategorier"
               />
               <StatCard
@@ -130,7 +130,7 @@ export default function Dashboard() {
             </div>
 
             {/* Segment cards grid */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
               {SEGMENTS.map((seg) => (
                 <SegmentCard
                   key={seg.id}
@@ -178,7 +178,7 @@ export default function Dashboard() {
               <h3 className="mb-4 text-sm font-semibold text-white">
                 Største bevegelser siste år
               </h3>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
                 {SEGMENTS.map((seg) => {
                   const change = getPriceChange(
                     seg.id,

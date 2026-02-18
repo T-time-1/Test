@@ -16,13 +16,12 @@ export interface SegmentPriceData {
 }
 
 // Realistic base prices per m² for Oslo (2019 Q1) by segment
+// Calibrated so that at typical sizes, total prices align with target price ranges
 const BASE_PRICES_OSLO: Record<string, number> = {
-  nest: 72000,
-  perch: 68000,
-  family: 62000,
-  villa: 55000,
-  castle: 50000,
-  crown: 65000,
+  bachelor: 72000, // ~42 m² → ~3.0M (starter segment, no fixed price range)
+  couple: 68000, // ~62 m² → ~4.2M base, grows to ~5-6.5M range
+  upsizer: 62000, // ~80 m² → ~5.0M base, grows to ~6-10M range
+  luxury: 65000, // ~110 m² → ~7.2M base, grows to ~10-16M range
 };
 
 // Municipality multiplier relative to Oslo
@@ -38,38 +37,28 @@ const MUNICIPALITY_MULTIPLIERS: Record<string, number> = {
 };
 
 // Quarterly growth rates by segment (simulate different market dynamics)
-// Small apartments surged post-2020, luxury cooled, family homes rose steadily
+// Small apartments surged post-2020, luxury had bigger swings
 const QUARTERLY_GROWTH: Record<string, number[]> = {
   // 2019 Q1-Q4, 2020 Q1-Q4, 2021 Q1-Q4, 2022 Q1-Q4, 2023 Q1-Q4, 2024 Q1-Q4, 2025 Q1-Q4
-  nest: [
+  bachelor: [
     0.012, 0.008, 0.015, 0.01, -0.005, 0.02, 0.035, 0.025, 0.04, 0.03,
     0.025, 0.02, 0.015, 0.01, -0.01, -0.015, -0.008, 0.005, 0.012, 0.018,
     0.02, 0.015, 0.01, 0.008, 0.01, 0.012, 0.008, 0.006,
   ],
-  perch: [
+  couple: [
     0.01, 0.007, 0.012, 0.008, -0.008, 0.015, 0.03, 0.022, 0.035, 0.028,
     0.022, 0.018, 0.012, 0.008, -0.012, -0.018, -0.01, 0.003, 0.01, 0.015,
     0.018, 0.012, 0.008, 0.006, 0.008, 0.01, 0.007, 0.005,
   ],
-  family: [
+  upsizer: [
     0.015, 0.01, 0.018, 0.012, -0.003, 0.025, 0.04, 0.03, 0.038, 0.032,
     0.028, 0.022, 0.018, 0.012, -0.008, -0.012, -0.005, 0.008, 0.015, 0.02,
     0.022, 0.018, 0.014, 0.01, 0.012, 0.015, 0.01, 0.008,
   ],
-  villa: [
-    0.018, 0.012, 0.02, 0.015, -0.002, 0.03, 0.045, 0.035, 0.042, 0.035,
-    0.03, 0.025, 0.02, 0.015, -0.005, -0.008, -0.003, 0.01, 0.018, 0.022,
-    0.025, 0.02, 0.016, 0.012, 0.015, 0.018, 0.012, 0.01,
-  ],
-  castle: [
+  luxury: [
     0.02, 0.015, 0.022, 0.018, 0.0, 0.035, 0.05, 0.04, 0.045, 0.038, 0.032,
     0.028, 0.022, 0.018, -0.003, -0.005, -0.001, 0.012, 0.02, 0.025, 0.028,
     0.022, 0.018, 0.015, 0.018, 0.02, 0.015, 0.012,
-  ],
-  crown: [
-    0.025, 0.018, 0.028, 0.02, 0.005, 0.04, 0.06, 0.045, 0.05, 0.04, 0.035,
-    0.03, 0.025, 0.02, 0.0, -0.002, 0.002, 0.015, 0.022, 0.028, 0.03, 0.025,
-    0.02, 0.018, 0.02, 0.022, 0.018, 0.015,
   ],
 };
 
@@ -87,7 +76,7 @@ function generateSegmentData(
 ): SegmentPriceData {
   const basePrice = BASE_PRICES_OSLO[segmentId] || 60000;
   const muni = MUNICIPALITY_MULTIPLIERS[municipalityId] || 0.7;
-  const growth = QUARTERLY_GROWTH[segmentId] || QUARTERLY_GROWTH["family"];
+  const growth = QUARTERLY_GROWTH[segmentId] || QUARTERLY_GROWTH["couple"];
 
   // Source variation: Finn tends slightly higher, SSB slightly more conservative
   const sourceMultiplier =
