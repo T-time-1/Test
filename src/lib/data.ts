@@ -1,4 +1,4 @@
-import { SEGMENTS } from "./segments";
+import { ALL_SEGMENTS, getSegmentsForMunicipality } from "./segments";
 import { MUNICIPALITIES } from "./municipalities";
 
 export interface PriceDataPoint {
@@ -20,8 +20,10 @@ export interface SegmentPriceData {
 const BASE_PRICES_OSLO: Record<string, number> = {
   bachelor: 72000, // ~42 m² → ~3.0M (starter segment, no fixed price range)
   couple: 68000, // ~62 m² → ~4.2M base, grows to ~5-6.5M range
+  starter: 70000, // Combined bachelor+couple, ~50 m² average
   upsizer: 62000, // ~80 m² → ~5.0M base, grows to ~6-10M range
   luxury: 65000, // ~110 m² → ~7.2M base, grows to ~10-16M range
+  villa: 45000, // ~160 m² → lower per m² but larger homes
 };
 
 // Municipality multiplier relative to Oslo
@@ -59,6 +61,18 @@ const QUARTERLY_GROWTH: Record<string, number[]> = {
     0.02, 0.015, 0.022, 0.018, 0.0, 0.035, 0.05, 0.04, 0.045, 0.038, 0.032,
     0.028, 0.022, 0.018, -0.003, -0.005, -0.001, 0.012, 0.02, 0.025, 0.028,
     0.022, 0.018, 0.015, 0.018, 0.02, 0.015, 0.012,
+  ],
+  // Starter: blend of bachelor and couple growth (averaged)
+  starter: [
+    0.011, 0.0075, 0.0135, 0.009, -0.0065, 0.0175, 0.0325, 0.0235, 0.0375,
+    0.029, 0.0235, 0.019, 0.0135, 0.009, -0.011, -0.0165, -0.009, 0.004,
+    0.011, 0.0165, 0.019, 0.0135, 0.009, 0.007, 0.009, 0.011, 0.0075, 0.0055,
+  ],
+  // Villa: suburban houses, bigger swings, strong post-COVID surge
+  villa: [
+    0.018, 0.012, 0.02, 0.015, -0.002, 0.03, 0.045, 0.035, 0.042, 0.035,
+    0.03, 0.025, 0.02, 0.015, -0.005, -0.008, -0.003, 0.01, 0.018, 0.022,
+    0.025, 0.02, 0.016, 0.012, 0.015, 0.018, 0.012, 0.01,
   ],
 };
 
@@ -109,7 +123,7 @@ function generateSegmentData(
   return { segmentId, municipalityId, source, data };
 }
 
-// Generate all price data
+// Generate all price data (all segments × all municipalities)
 export function getAllPriceData(): SegmentPriceData[] {
   const allData: SegmentPriceData[] = [];
   const sources: Array<"finn" | "ssb" | "combined"> = [
@@ -118,7 +132,7 @@ export function getAllPriceData(): SegmentPriceData[] {
     "combined",
   ];
 
-  for (const segment of SEGMENTS) {
+  for (const segment of ALL_SEGMENTS) {
     for (const municipality of MUNICIPALITIES) {
       for (const source of sources) {
         allData.push(
@@ -129,6 +143,21 @@ export function getAllPriceData(): SegmentPriceData[] {
   }
 
   return allData;
+}
+
+// Get price data for a specific municipality, filtered to applicable segments
+export function getMunicipalitySegmentData(
+  municipalityId: string,
+  source: "finn" | "ssb" | "combined" = "combined"
+): SegmentPriceData[] {
+  const segments = getSegmentsForMunicipality(municipalityId);
+  const segmentIds = new Set(segments.map((s) => s.id));
+  return getAllPriceData().filter(
+    (d) =>
+      d.municipalityId === municipalityId &&
+      d.source === source &&
+      segmentIds.has(d.segmentId)
+  );
 }
 
 // Get price data for a specific segment across municipalities

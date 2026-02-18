@@ -1,12 +1,22 @@
 "use client";
 
-import { SEGMENTS } from "@/lib/segments";
+import { getSegmentsForMunicipality } from "@/lib/segments";
 import {
   getLatestPrice,
   getTotalAppreciation,
   getPriceChange,
   formatPrice,
 } from "@/lib/data";
+
+// Typical mid-point sizes for each segment
+const MID_SIZES: Record<string, number> = {
+  bachelor: 42,
+  couple: 62,
+  starter: 50,
+  upsizer: 80,
+  luxury: 110,
+  villa: 160,
+};
 
 interface JourneyViewProps {
   municipalityId: string;
@@ -19,17 +29,13 @@ export default function JourneyView({
   onMunicipalityChange,
   onSegmentClick,
 }: JourneyViewProps) {
+  const segments = getSegmentsForMunicipality(municipalityId);
+  const isOslo = municipalityId === "oslo";
+
   // Calculate "journey cost" - total cost of climbing the property ladder
-  const journeySteps = SEGMENTS.map((seg) => {
+  const journeySteps = segments.map((seg) => {
     const pricePerM2 = getLatestPrice(seg.id, municipalityId);
-    const midSize =
-      seg.id === "bachelor"
-        ? 42
-        : seg.id === "couple"
-          ? 62
-          : seg.id === "upsizer"
-            ? 80
-            : 110;
+    const midSize = MID_SIZES[seg.id] ?? 80;
     const totalPrice = pricePerM2 * midSize;
     const appreciation = getTotalAppreciation(seg.id, municipalityId);
     const yearChange = getPriceChange(seg.id, municipalityId, 4);
@@ -49,13 +55,17 @@ export default function JourneyView({
     0
   );
 
+  const firstSeg = segments[0];
+  const lastSeg = segments[segments.length - 1];
+
   return (
     <div className="space-y-6">
       <div className="glass-card p-6">
         <h2 className="text-xl font-bold text-white">Boligreisen</h2>
         <p className="mt-1 text-sm text-slate-400">
-          Fra ungkarsredet til luksusleiligheten. Se hva hvert steg i
-          boligkarrieren koster og hvordan prisene har utviklet seg.
+          {isOslo
+            ? "Fra ungkarsredet til luksusleiligheten. Se hva hvert steg i boligkarrieren koster og hvordan prisene har utviklet seg."
+            : "Fra starterleiligheten til villaen. Se hva hvert steg i boligkarrieren koster og hvordan prisene har utviklet seg."}
         </p>
         <div className="mt-4 journey-line" />
       </div>
@@ -89,7 +99,7 @@ export default function JourneyView({
       {/* Journey timeline */}
       <div className="relative space-y-4">
         {/* Vertical connector line */}
-        <div className="absolute left-8 top-0 h-full w-0.5 bg-gradient-to-b from-amber-400 via-blue-400 via-emerald-400 to-violet-500 opacity-30" />
+        <div className="absolute left-8 top-0 h-full w-0.5 bg-gradient-to-b from-amber-400 via-emerald-400 to-violet-500 opacity-30" />
 
         {journeySteps.map((step, idx) => (
           <button
@@ -175,7 +185,7 @@ export default function JourneyView({
               Total boligreise-kostnad
             </h3>
             <p className="text-xs text-slate-400">
-              Summen av alle 4 steg (typisk størrelse per segment)
+              Summen av alle {segments.length} steg (typisk størrelse per segment)
             </p>
           </div>
           <div className="text-right">
@@ -183,7 +193,7 @@ export default function JourneyView({
               {formatPrice(totalJourneyCost)}
             </p>
             <p className="text-xs text-slate-500">
-              Fra ungkarsrede til luksusleilighet
+              Fra {firstSeg.name.toLowerCase()} til {lastSeg.name.toLowerCase()}
             </p>
           </div>
         </div>
@@ -203,8 +213,8 @@ export default function JourneyView({
           ))}
         </div>
         <div className="mt-2 flex justify-between text-[10px] text-slate-500">
-          <span>🏠 Ungkarsredet</span>
-          <span>✨ Luksusleilighet</span>
+          <span>{firstSeg.icon} {firstSeg.name}</span>
+          <span>{lastSeg.icon} {lastSeg.name}</span>
         </div>
       </div>
     </div>

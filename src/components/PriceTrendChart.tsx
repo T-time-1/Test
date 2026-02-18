@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { SEGMENTS, getSegmentById } from "@/lib/segments";
+import { getSegmentById, getSegmentsForMunicipality } from "@/lib/segments";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import {
   getSegmentPriceData,
@@ -37,7 +37,10 @@ export default function PriceTrendChart({
 }: PriceTrendChartProps) {
   // Mode 1: Show all segments for one municipality
   if (showAllSegments && municipalityId) {
-    const municipalityData = getMunicipalityPriceData(municipalityId, source);
+    const segments = getSegmentsForMunicipality(municipalityId);
+    const segmentIds = new Set(segments.map((s) => s.id));
+    const municipalityData = getMunicipalityPriceData(municipalityId, source)
+      .filter((d) => segmentIds.has(d.segmentId));
 
     // Build combined dataset keyed by label
     const combined: Record<string, Record<string, number>> = {};
@@ -90,7 +93,7 @@ export default function PriceTrendChart({
                 `${getSegmentById(value)?.icon ?? ""} ${getSegmentById(value)?.name ?? value}`
               }
             />
-            {SEGMENTS.map((seg) => (
+            {segments.map((seg) => (
               <Line
                 key={seg.id}
                 type="monotone"

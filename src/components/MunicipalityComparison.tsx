@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SEGMENTS } from "@/lib/segments";
+import { getSegmentsForMunicipality } from "@/lib/segments";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import { getLatestPrice, getPriceChange, formatPrice } from "@/lib/data";
 import PriceTrendChart from "./PriceTrendChart";
@@ -17,6 +17,19 @@ export default function MunicipalityComparison({
 }: MunicipalityComparisonProps) {
   const [selectedMunicipality, setSelectedMunicipality] = useState("oslo");
   const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
+
+  const segments = getSegmentsForMunicipality(selectedMunicipality);
+
+  // When changing municipality, clear segment if it doesn't exist in the new set
+  const handleMunicipalityChange = (id: string) => {
+    setSelectedMunicipality(id);
+    if (selectedSegment) {
+      const newSegments = getSegmentsForMunicipality(id);
+      if (!newSegments.find((s) => s.id === selectedSegment)) {
+        setSelectedSegment(null);
+      }
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -37,7 +50,7 @@ export default function MunicipalityComparison({
           {MUNICIPALITIES.map((muni) => (
             <button
               key={muni.id}
-              onClick={() => setSelectedMunicipality(muni.id)}
+              onClick={() => handleMunicipalityChange(muni.id)}
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                 selectedMunicipality === muni.id
                   ? "bg-white/15 text-white"
@@ -84,7 +97,7 @@ export default function MunicipalityComparison({
           Velg segment for geografisk sammenligning
         </h3>
         <div className="flex flex-wrap gap-2">
-          {SEGMENTS.map((seg) => (
+          {segments.map((seg) => (
             <button
               key={seg.id}
               onClick={() =>
@@ -121,50 +134,64 @@ export default function MunicipalityComparison({
         />
       )}
 
-      {/* Price heatmap table */}
+      {/* Price table per municipality */}
       <div className="glass-card overflow-x-auto">
         <div className="border-b border-white/10 px-4 py-3">
           <h3 className="text-sm font-semibold text-white">
-            Prisoversikt: alle segmenter × kommuner (kr/m²)
+            Prisoversikt per kommune (kr/m²)
           </h3>
         </div>
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-white/5">
-              <th className="px-3 py-2 text-left text-slate-400">Segment</th>
-              {MUNICIPALITIES.map((m) => (
-                <th key={m.id} className="px-3 py-2 text-right text-slate-400">
-                  {m.name}
+              <th className="px-3 py-2 text-left text-slate-400">Kommune</th>
+              {segments.map((seg) => (
+                <th key={seg.id} className="px-3 py-2 text-right text-slate-400">
+                  {seg.icon} {seg.name}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {SEGMENTS.map((seg) => (
-              <tr key={seg.id} className="hover:bg-white/5">
-                <td className="px-3 py-2 font-medium text-white">
-                  {seg.icon} {seg.name}
-                </td>
-                {MUNICIPALITIES.map((muni) => {
-                  const price = getLatestPrice(seg.id, muni.id, source);
-                  const change = getPriceChange(seg.id, muni.id, 4, source);
-                  return (
-                    <td key={muni.id} className="px-3 py-2 text-right">
-                      <span className="text-white">
-                        {formatPrice(price)}
-                      </span>
-                      <br />
-                      <span
-                        className={`${change > 0 ? "price-up" : change < 0 ? "price-down" : "price-flat"}`}
-                      >
-                        {change > 0 ? "+" : ""}
-                        {change.toFixed(1)}%
-                      </span>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
+            {MUNICIPALITIES.map((muni) => {
+              const muniSegments = getSegmentsForMunicipality(muni.id);
+              return (
+                <tr key={muni.id} className="hover:bg-white/5">
+                  <td className="px-3 py-2 font-medium text-white">
+                    {muni.name}
+                    {muni.id === "oslo" && (
+                      <span className="ml-1 text-[10px] text-slate-500">(leiligheter)</span>
+                    )}
+                  </td>
+                  {segments.map((seg) => {
+                    const hasSegment = muniSegments.find((s) => s.id === seg.id);
+                    if (!hasSegment) {
+                      return (
+                        <td key={seg.id} className="px-3 py-2 text-right text-slate-600">
+                          —
+                        </td>
+                      );
+                    }
+                    const price = getLatestPrice(seg.id, muni.id, source);
+                    const change = getPriceChange(seg.id, muni.id, 4, source);
+                    return (
+                      <td key={seg.id} className="px-3 py-2 text-right">
+                        <span className="text-white">
+                          {formatPrice(price)}
+                        </span>
+                        <br />
+                        <span
+                          className={`${change > 0 ? "price-up" : change < 0 ? "price-down" : "price-flat"}`}
+                        >
+                          {change > 0 ? "+" : ""}
+                          {change.toFixed(1)}%
+                        </span>
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

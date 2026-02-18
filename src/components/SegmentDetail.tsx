@@ -1,6 +1,6 @@
 "use client";
 
-import { PropertySegment } from "@/lib/segments";
+import { PropertySegment, getSegmentsForMunicipality } from "@/lib/segments";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import {
   getLatestPrice,
@@ -68,7 +68,7 @@ export default function SegmentDetail({
                 </span>
               )}
               <span className="text-xs text-slate-500">
-                Steg {segment.order} av 4 i boligreisen
+                Steg {segment.order} av {getSegmentsForMunicipality(selectedMunicipality).length} i boligreisen
               </span>
             </div>
           </div>

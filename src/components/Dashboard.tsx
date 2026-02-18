@@ -1,19 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { SEGMENTS, getSegmentById } from "@/lib/segments";
+import { getSegmentById, getSegmentsForMunicipality } from "@/lib/segments";
 import Header from "./Header";
 import SegmentCard from "./SegmentCard";
 import SegmentDetail from "./SegmentDetail";
 import PriceTrendChart from "./PriceTrendChart";
 import MunicipalityComparison from "./MunicipalityComparison";
 import JourneyView from "./JourneyView";
-import {
-  getLatestPrice,
-  getPriceChange,
-  getTotalAppreciation,
-  formatPrice,
-} from "@/lib/data";
+import { getPriceChange } from "@/lib/data";
 
 export default function Dashboard() {
   const [activeSegment, setActiveSegment] = useState<string | null>(null);
@@ -24,6 +19,19 @@ export default function Dashboard() {
   const [source, setSource] = useState<"finn" | "ssb" | "combined">(
     "combined"
   );
+
+  const segments = getSegmentsForMunicipality(selectedMunicipality);
+
+  const handleMunicipalityChange = (id: string) => {
+    setSelectedMunicipality(id);
+    // Clear active segment if it doesn't exist in the new municipality's segments
+    if (activeSegment) {
+      const newSegments = getSegmentsForMunicipality(id);
+      if (!newSegments.find((s) => s.id === activeSegment)) {
+        setActiveSegment(null);
+      }
+    }
+  };
 
   const handleSegmentClick = (id: string | null) => {
     setActiveSegment(id);
@@ -41,6 +49,7 @@ export default function Dashboard() {
         onSegmentClick={handleSegmentClick}
         activeView={activeView}
         onViewChange={setActiveView}
+        municipalityId={selectedMunicipality}
       />
 
       <main className="mx-auto max-w-7xl px-4 py-6">
@@ -48,7 +57,7 @@ export default function Dashboard() {
         {activeView === "journey" && (
           <JourneyView
             municipalityId={selectedMunicipality}
-            onMunicipalityChange={setSelectedMunicipality}
+            onMunicipalityChange={handleMunicipalityChange}
             onSegmentClick={(id) => {
               setActiveSegment(id);
               setActiveView("overview");
@@ -69,7 +78,7 @@ export default function Dashboard() {
           <SegmentDetail
             segment={segment}
             selectedMunicipality={selectedMunicipality}
-            onMunicipalityChange={setSelectedMunicipality}
+            onMunicipalityChange={handleMunicipalityChange}
             source={source}
             onSourceChange={setSource}
           />
@@ -82,8 +91,8 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <StatCard
                 label="Segmenter"
-                value="4"
-                sub="boligkategorier"
+                value={`${segments.length}`}
+                sub={selectedMunicipality === "oslo" ? "leiligheter" : "boligkategorier"}
               />
               <StatCard
                 label="Kommuner"
@@ -116,7 +125,7 @@ export default function Dashboard() {
                 ].map((muni) => (
                   <button
                     key={muni.id}
-                    onClick={() => setSelectedMunicipality(muni.id)}
+                    onClick={() => handleMunicipalityChange(muni.id)}
                     className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                       selectedMunicipality === muni.id
                         ? "bg-white/15 text-white"
@@ -131,7 +140,7 @@ export default function Dashboard() {
 
             {/* Segment cards grid */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-              {SEGMENTS.map((seg) => (
+              {segments.map((seg) => (
                 <SegmentCard
                   key={seg.id}
                   segment={seg}
@@ -179,7 +188,7 @@ export default function Dashboard() {
                 Største bevegelser siste år
               </h3>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
-                {SEGMENTS.map((seg) => {
+                {segments.map((seg) => {
                   const change = getPriceChange(
                     seg.id,
                     selectedMunicipality,

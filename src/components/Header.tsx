@@ -1,12 +1,13 @@
 "use client";
 
-import { SEGMENTS } from "@/lib/segments";
+import { getSegmentsForMunicipality } from "@/lib/segments";
 
 interface HeaderProps {
   activeSegment: string | null;
   onSegmentClick: (id: string | null) => void;
   activeView: "overview" | "compare" | "journey";
   onViewChange: (view: "overview" | "compare" | "journey") => void;
+  municipalityId: string;
 }
 
 export default function Header({
@@ -14,7 +15,10 @@ export default function Header({
   onSegmentClick,
   activeView,
   onViewChange,
+  municipalityId,
 }: HeaderProps) {
+  const segments = getSegmentsForMunicipality(municipalityId);
+
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-900/80 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4 py-4">
@@ -70,7 +74,7 @@ export default function Header({
           >
             Alle
           </button>
-          {SEGMENTS.map((seg) => (
+          {segments.map((seg) => (
             <button
               key={seg.id}
               onClick={() => onSegmentClick(seg.id)}
