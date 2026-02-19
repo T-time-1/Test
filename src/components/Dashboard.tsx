@@ -1,256 +1,89 @@
 "use client";
 
 import { useState } from "react";
-import { getSegmentById, getSegmentsForMunicipality } from "@/lib/segments";
-import Header from "./Header";
-import SegmentCard from "./SegmentCard";
-import SegmentDetail from "./SegmentDetail";
-import PriceTrendChart from "./PriceTrendChart";
-import MunicipalityComparison from "./MunicipalityComparison";
 import JourneyView from "./JourneyView";
-import { getPriceChange } from "@/lib/data";
+import DataSourceReferences from "./DataSourceReferences";
+
+type Page = "oslo" | "nesodden";
 
 export default function Dashboard() {
-  const [activeSegment, setActiveSegment] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<
-    "overview" | "compare" | "journey"
-  >("overview");
-  const [selectedMunicipality, setSelectedMunicipality] = useState("oslo");
-  const [source, setSource] = useState<"finn" | "ssb" | "combined">(
-    "combined"
-  );
-
-  const segments = getSegmentsForMunicipality(selectedMunicipality);
-
-  const handleMunicipalityChange = (id: string) => {
-    setSelectedMunicipality(id);
-    // Clear active segment if it doesn't exist in the new municipality's segments
-    if (activeSegment) {
-      const newSegments = getSegmentsForMunicipality(id);
-      if (!newSegments.find((s) => s.id === activeSegment)) {
-        setActiveSegment(null);
-      }
-    }
-  };
-
-  const handleSegmentClick = (id: string | null) => {
-    setActiveSegment(id);
-    if (id) {
-      setActiveView("overview");
-    }
-  };
-
-  const segment = activeSegment ? getSegmentById(activeSegment) : null;
+  const [page, setPage] = useState<Page>("oslo");
 
   return (
     <div className="min-h-screen">
-      <Header
-        activeSegment={activeSegment}
-        onSegmentClick={handleSegmentClick}
-        activeView={activeView}
-        onViewChange={setActiveView}
-        municipalityId={selectedMunicipality}
-      />
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-900/80 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🏠</span>
+              <div>
+                <h1 className="text-lg font-bold tracking-tight text-white">
+                  Life of Property
+                </h1>
+                <p className="text-xs text-slate-400">
+                  Boligreisen &mdash; prisutvikling 2019–2025
+                </p>
+              </div>
+            </div>
+
+            <nav className="flex gap-1 rounded-xl bg-white/5 p-1">
+              <button
+                onClick={() => setPage("oslo")}
+                className={`rounded-lg px-5 py-2 text-sm font-medium transition-all ${
+                  page === "oslo"
+                    ? "bg-white/15 text-white shadow-sm"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Oslo
+              </button>
+              <button
+                onClick={() => setPage("nesodden")}
+                className={`rounded-lg px-5 py-2 text-sm font-medium transition-all ${
+                  page === "nesodden"
+                    ? "bg-white/15 text-white shadow-sm"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Nesodden
+              </button>
+            </nav>
+          </div>
+        </div>
+      </header>
 
       <main className="mx-auto max-w-7xl px-4 py-6">
-        {/* Journey view */}
-        {activeView === "journey" && (
-          <JourneyView
-            municipalityId={selectedMunicipality}
-            onMunicipalityChange={handleMunicipalityChange}
-            onSegmentClick={(id) => {
-              setActiveSegment(id);
-              setActiveView("overview");
-            }}
-          />
-        )}
-
-        {/* Municipality comparison view */}
-        {activeView === "compare" && (
-          <MunicipalityComparison
-            source={source}
-            onSourceChange={setSource}
-          />
-        )}
-
-        {/* Overview: segment detail */}
-        {activeView === "overview" && segment && (
-          <SegmentDetail
-            segment={segment}
-            selectedMunicipality={selectedMunicipality}
-            onMunicipalityChange={handleMunicipalityChange}
-            source={source}
-            onSourceChange={setSource}
-          />
-        )}
-
-        {/* Overview: dashboard grid */}
-        {activeView === "overview" && !segment && (
-          <div className="space-y-6">
-            {/* Top stats */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <StatCard
-                label="Segmenter"
-                value={`${segments.length}`}
-                sub={selectedMunicipality === "oslo" ? "leiligheter" : "boligkategorier"}
-              />
-              <StatCard
-                label="Kommuner"
-                value="8"
-                sub="Oslo + omegn"
-              />
-              <StatCard
-                label="Datakilder"
-                value="2"
-                sub="Finn.no + SSB"
-              />
-              <StatCard
-                label="Historikk"
-                value="7 år"
-                sub="2019 – 2025"
-              />
-            </div>
-
-            {/* Municipality selector */}
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-slate-500">Vis priser for:</span>
-              <div className="flex flex-wrap gap-1 rounded-xl bg-white/5 p-1">
-                {[
-                  { id: "oslo", name: "Oslo" },
-                  { id: "baerum", name: "Bærum" },
-                  { id: "asker", name: "Asker" },
-                  { id: "lillestrom", name: "Lillestrøm" },
-                  { id: "nordre-follo", name: "N. Follo" },
-                  { id: "lorenskog", name: "Lørenskog" },
-                ].map((muni) => (
-                  <button
-                    key={muni.id}
-                    onClick={() => handleMunicipalityChange(muni.id)}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                      selectedMunicipality === muni.id
-                        ? "bg-white/15 text-white"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    {muni.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Segment cards grid */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-              {segments.map((seg) => (
-                <SegmentCard
-                  key={seg.id}
-                  segment={seg}
-                  municipalityId={selectedMunicipality}
-                  onClick={() => handleSegmentClick(seg.id)}
-                />
-              ))}
-            </div>
-
-            {/* Overview chart */}
-            <PriceTrendChart
-              municipalityId={selectedMunicipality}
-              showAllSegments
-              source={source}
-              height={400}
-            />
-
-            {/* Source selector */}
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-xs text-slate-500">Datakilde:</span>
-              <div className="flex gap-1 rounded-xl bg-white/5 p-1">
-                {(["combined", "finn", "ssb"] as const).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setSource(s)}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                      source === s
-                        ? "bg-white/15 text-white"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    {s === "combined"
-                      ? "Kombinert"
-                      : s === "finn"
-                        ? "🔍 Finn.no"
-                        : "📊 SSB"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Biggest movers */}
-            <div className="glass-card p-5">
-              <h3 className="mb-4 text-sm font-semibold text-white">
-                Største bevegelser siste år
-              </h3>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
-                {segments.map((seg) => {
-                  const change = getPriceChange(
-                    seg.id,
-                    selectedMunicipality,
-                    4,
-                    source
-                  );
-                  return (
-                    <div
-                      key={seg.id}
-                      className="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3"
-                    >
-                      <span className="text-xl">{seg.icon}</span>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-white">
-                          {seg.name}
-                        </p>
-                      </div>
-                      <p
-                        className={`text-sm font-bold ${change > 0 ? "price-up" : change < 0 ? "price-down" : "price-flat"}`}
-                      >
-                        {change > 0 ? "↑" : change < 0 ? "↓" : "→"}{" "}
-                        {change > 0 ? "+" : ""}
-                        {change.toFixed(1)}%
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <footer className="pb-8 pt-4 text-center text-xs text-slate-600">
-              <p>
-                Data: Simulerte markedspriser basert på Finn.no-mønstre og
-                SSB-statistikk.
-              </p>
-              <p className="mt-1">
-                Life of Property &copy; 2025 &middot; Boligprisene i
-                Oslo-regionen
-              </p>
-            </footer>
+        <div className="space-y-6">
+          {/* Page intro */}
+          <div className="glass-card p-6">
+            <h2 className="text-xl font-bold text-white">
+              Boligreisen &mdash;{" "}
+              {page === "oslo" ? "Oslo" : "Nesodden"}
+            </h2>
+            <p className="mt-1 text-sm text-slate-400">
+              {page === "oslo"
+                ? "Fra ungkarsredet til luksusleiligheten. Se hva hvert steg i boligkarrieren koster i Oslo og hvordan prisene har utviklet seg siden 2019."
+                : "Fra leilighet til drømmehuset. Se hva hvert steg i boligkarrieren koster på Nesodden og hvordan prisene har utviklet seg siden 2019."}
+            </p>
+            <div className="mt-4 journey-line" />
           </div>
-        )}
-      </main>
-    </div>
-  );
-}
 
-function StatCard({
-  label,
-  value,
-  sub,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-}) {
-  return (
-    <div className="glass-card p-4">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="text-2xl font-bold text-white">{value}</p>
-      <p className="text-xs text-slate-400">{sub}</p>
+          {/* Journey */}
+          <JourneyView municipalityId={page} />
+
+          {/* Data source references */}
+          <DataSourceReferences />
+
+          {/* Footer */}
+          <footer className="pb-8 pt-4 text-center text-xs text-slate-600">
+            <p>
+              Life of Property &copy; 2025 &middot; Boligprisene i
+              Oslo-regionen
+            </p>
+          </footer>
+        </div>
+      </main>
     </div>
   );
 }

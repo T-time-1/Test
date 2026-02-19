@@ -12,7 +12,8 @@ export interface PropertySegment {
   order: number;
 }
 
-// Oslo-only segments (apartments)
+// --- Oslo segments (apartments) ---
+
 const BACHELOR: PropertySegment = {
   id: "bachelor",
   name: "Ungkarsredet",
@@ -42,7 +43,6 @@ const COUPLE: PropertySegment = {
   order: 2,
 };
 
-// Shared segments (used by all municipalities)
 const UPSIZER: PropertySegment = {
   id: "upsizer",
   name: "Flergangsselger i oppgangstider",
@@ -73,68 +73,109 @@ const LUXURY: PropertySegment = {
   order: 4,
 };
 
-// Non-Oslo segments
-const STARTER: PropertySegment = {
-  id: "starter",
-  name: "Starterleilighet",
-  subtitle: "1-3 roms leilighet",
-  icon: "🏠",
+// --- Nesodden segments ---
+
+const NESODDEN_LEILIGHET: PropertySegment = {
+  id: "nesodden-leilighet",
+  name: "Leilighet",
+  subtitle: "Leilighet",
+  icon: "🏢",
   description:
-    "Første bolig. Fra ungkarsredet til det første samboerprosjektet – små til mellomstore leiligheter.",
-  sizeRange: "30–70 m²",
-  color: "starter",
+    "Leiligheter på Nesodden. Fra små til mellomstore leiligheter i sentrale områder.",
+  sizeRange: "50–80 m²",
+  color: "nesodden-leilighet",
   colorHex: "#F59E0B",
   gradient: "from-amber-400 to-amber-500",
   order: 1,
 };
 
-const VILLA: PropertySegment = {
-  id: "villa",
-  name: "Villa",
-  subtitle: "Enebolig / rekkehus",
+const NESODDEN_TOMANNSBOLIG: PropertySegment = {
+  id: "nesodden-tomannsbolig",
+  name: "Tomannsbolig",
+  subtitle: "Tomannsbolig / rekkehus",
+  icon: "🏘️",
+  description:
+    "Tomannsboliger og rekkehus. Et steg opp fra leilighet med mer plass og ofte hage.",
+  sizeRange: "100–140 m²",
+  color: "nesodden-tomannsbolig",
+  colorHex: "#3B82F6",
+  gradient: "from-blue-400 to-blue-500",
+  order: 2,
+};
+
+const NESODDEN_ENEBOLIG_SM: PropertySegment = {
+  id: "nesodden-enebolig-sm",
+  name: "Enebolig",
+  subtitle: "7–10 mill. kr",
   icon: "🏡",
   description:
-    "Hus med hage. Eneboliger og rekkehus for de som vil ha plass, grønt uteområde og ro.",
-  sizeRange: "130+ m²",
-  color: "villa",
+    "Rimelige eneboliger på Nesodden. Ofte eldre hus eller mindre tomter.",
+  sizeRange: "120–160 m²",
+  priceRange: "7 000 000 – 10 000 000 kr",
+  color: "nesodden-enebolig-sm",
+  colorHex: "#10B981",
+  gradient: "from-emerald-400 to-emerald-500",
+  order: 3,
+};
+
+const NESODDEN_ENEBOLIG_MD: PropertySegment = {
+  id: "nesodden-enebolig-md",
+  name: "Enebolig",
+  subtitle: "10–13 mill. kr",
+  icon: "🏠",
+  description:
+    "Mellomklasse eneboliger. Godt vedlikeholdt med attraktiv beliggenhet.",
+  sizeRange: "150–200 m²",
+  priceRange: "10 000 000 – 13 000 000 kr",
+  color: "nesodden-enebolig-md",
+  colorHex: "#8B5CF6",
+  gradient: "from-violet-400 to-violet-500",
+  order: 4,
+};
+
+const NESODDEN_ENEBOLIG_LG: PropertySegment = {
+  id: "nesodden-enebolig-lg",
+  name: "Enebolig",
+  subtitle: "13–17 mill. kr",
+  icon: "✨",
+  description:
+    "Premium eneboliger. Store hus med sjøutsikt eller attraktive tomter.",
+  sizeRange: "180–260 m²",
+  priceRange: "13 000 000 – 17 000 000 kr",
+  color: "nesodden-enebolig-lg",
   colorHex: "#EC4899",
   gradient: "from-pink-400 to-pink-500",
   order: 5,
 };
 
-// Oslo segments: 4 apartment categories
+// --- Exports ---
+
 export const OSLO_SEGMENTS: PropertySegment[] = [
   BACHELOR,
   COUPLE,
-  { ...UPSIZER, order: 3 },
-  { ...LUXURY, order: 4 },
-];
-
-// Non-Oslo segments: combined starter + villa
-export const OTHER_SEGMENTS: PropertySegment[] = [
-  STARTER,
-  { ...UPSIZER, order: 2 },
-  { ...LUXURY, order: 3 },
-  { ...VILLA, order: 4 },
-];
-
-// All unique segments (for data generation and lookups)
-export const ALL_SEGMENTS: PropertySegment[] = [
-  BACHELOR,
-  COUPLE,
-  STARTER,
   UPSIZER,
   LUXURY,
-  VILLA,
 ];
 
-// Legacy export for backwards compatibility in imports
-export const SEGMENTS = OSLO_SEGMENTS;
+export const NESODDEN_SEGMENTS: PropertySegment[] = [
+  NESODDEN_LEILIGHET,
+  NESODDEN_TOMANNSBOLIG,
+  NESODDEN_ENEBOLIG_SM,
+  NESODDEN_ENEBOLIG_MD,
+  NESODDEN_ENEBOLIG_LG,
+];
+
+export const ALL_SEGMENTS: PropertySegment[] = [
+  ...OSLO_SEGMENTS,
+  ...NESODDEN_SEGMENTS,
+];
 
 export function getSegmentsForMunicipality(
   municipalityId: string
 ): PropertySegment[] {
-  return municipalityId === "oslo" ? OSLO_SEGMENTS : OTHER_SEGMENTS;
+  if (municipalityId === "oslo") return OSLO_SEGMENTS;
+  if (municipalityId === "nesodden") return NESODDEN_SEGMENTS;
+  return OSLO_SEGMENTS;
 }
 
 export function getSegmentById(id: string): PropertySegment | undefined {
